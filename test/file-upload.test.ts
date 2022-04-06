@@ -4,29 +4,18 @@ import { FileUpload } from '../src/FileUpload.js';
 import '../src/file-upload.js';
 
 describe('FileUpload', () => {
-  it('has a default title "Hey there" and counter 5', async () => {
-    const el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
+  describe('<input> element insertion', () => {
+    it('inserts <input> by default', async () => {
+      const el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
+      expect(el.input).to.be.ok;
+    });
 
-    expect(el.title).to.equal('Hey there');
-    expect(el.counter).to.equal(5);
-  });
-
-  it('increases the counter on button click', async () => {
-    const el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
-    el.shadowRoot!.querySelector('button')!.click();
-
-    expect(el.counter).to.equal(6);
-  });
-
-  it('can override the title via attribute', async () => {
-    const el = await fixture<FileUpload>(html`<file-upload title="attribute title"></file-upload>`);
-
-    expect(el.title).to.equal('attribute title');
-  });
-
-  it('passes the a11y audit', async () => {
-    const el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
-
-    await expect(el).shadowDom.to.be.accessible();
+    it("does not insert <input> if it's already specified", async () => {
+      const el = await fixture<FileUpload>(
+        html`<file-upload><input type="file" id="test-id" /></file-upload>`
+      );
+      const inputId = el.input.id;
+      expect(inputId).to.equal('test-id');
+    });
   });
 });

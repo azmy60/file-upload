@@ -1,27 +1,15 @@
-import { html, css, LitElement } from 'lit';
-import { property } from 'lit/decorators.js';
+import { html, LitElement } from 'lit';
+import { queryAssignedElements } from 'lit/decorators.js';
 
 export class FileUpload extends LitElement {
-  static styles = css`
-    :host {
-      display: block;
-      padding: 25px;
-      color: var(--file-upload-text-color, #000);
-    }
-  `;
+  @queryAssignedElements({ flatten: true })
+  inputs!: Array<HTMLInputElement>;
 
-  @property({ type: String }) title = 'Hey there';
-
-  @property({ type: Number }) counter = 5;
-
-  __increment() {
-    this.counter += 1;
+  get input() {
+    return this.inputs[0];
   }
 
   render() {
-    return html`
-      <h2>${this.title} Nr. ${this.counter}!</h2>
-      <button @click=${this.__increment}>increment</button>
-    `;
+    return html`<slot><input type="file" /></slot>`;
   }
 }
