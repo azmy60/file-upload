@@ -7,6 +7,7 @@ describe('FileUpload', () => {
   describe('<input> element insertion', () => {
     it('inserts <input> by default', async () => {
       const el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
+
       expect(el.input).to.be.ok;
     });
 
@@ -14,34 +15,34 @@ describe('FileUpload', () => {
       const el = await fixture<FileUpload>(
         html`<file-upload><input type="file" id="test-id" /></file-upload>`
       );
-      const inputId = el.input.id;
-      expect(inputId).to.equal('test-id');
+
+      expect(el.input.id).to.equal('test-id');
     });
   });
 
-  describe('setting from attributes', () => {
-    it('can set `multiple`', async () => {
-      const el = await fixture<FileUpload>(
-        html`<file-upload multiple></file-upload>`
-      );
-      expect(el.input.multiple).to.be.true;
-    });
+  describe('attribute settings', () => {
+    describe('`multiple`', () => {
+      it('accepts one file by default', async () => {
+        const el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
 
-    it("can set `multiple` from <input> if it's present", async () => {
-      const inputSet = await fixture<FileUpload>(
-        html`<file-upload><input type="file" multiple /></file-upload>`
-      );
-      expect(inputSet.input.multiple).to.be.true;
+        expect(el.input.multiple).to.be.false;
+      });
 
-      const rootSet = await fixture<FileUpload>(
-        html`<file-upload multiple><input type="file" /></file-upload>`
-      );
-      expect(rootSet.input.multiple).to.be.true;
+      it('accepts multiple files by setting `multiple` attribute in <file-upload> tag', async () => {
+        const el = await fixture<FileUpload>(
+          html`<file-upload multiple><input type="file" /></file-upload>`
+        );
 
-      const bothUnset = await fixture<FileUpload>(
-        html`<file-upload><input type="file" /></file-upload>`
-      );
-      expect(bothUnset.input.multiple).to.be.false;
+        expect(el.input.multiple).to.be.true;
+      });
+
+      it('accepts multiple files by setting `multiple` attribute in <input> tag', async () => {
+        const el = await fixture<FileUpload>(
+          html`<file-upload><input type="file" multiple /></file-upload>`
+        );
+
+        expect(el.input.multiple).to.be.true;
+      });
     });
   });
 });
