@@ -47,60 +47,45 @@ describe('FileUpload', () => {
   });
 
   describe('files', () => {
+    let el: FileUpload;
+    let dataTransfer: DataTransfer;
+    let waitForAttached: Promise<CustomEvent>;
+    const file1 = new File(['watermelon'], 'watermelon.txt', {
+      type: 'text/plain',
+    });
+    const file2 = new File(['watermelon2'], 'watermelon2.txt', {
+      type: 'text/plain',
+    });
+
+    beforeEach(async () => {
+      el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
+      dataTransfer = new DataTransfer();
+      waitForAttached = oneEvent(el, 'ff-attached');
+    });
+
     it('attaches via .attach', async () => {
-      const el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
-
-      const dataTransfer = new DataTransfer();
-      const file = new File(['watermelon'], 'watermelon.txt', {
-        type: 'text/plain',
-      });
-      dataTransfer.items.add(file);
-
-      const waitForAttached = oneEvent(
-        el,
-        'ff-attached'
-      ) as Promise<CustomEvent>;
+      dataTransfer.items.add(file1);
       el.attach(dataTransfer);
-      const { detail } = await waitForAttached;
 
-      expect(detail.files.length).to.equal(1);
+      expect(el.input.files?.length).to.equal(1);
     });
 
     it('attaches via drop event', async () => {
-      const el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
+      dataTransfer.items.add(file1);
 
-      const dataTransfer = new DataTransfer();
-      const file = new File(['watermelon'], 'watermelon.txt', {
-        type: 'text/plain',
-      });
-      dataTransfer.items.add(file);
-
-      const waitForAttached = oneEvent(
-        el,
-        'ff-attached'
-      ) as Promise<CustomEvent>;
       const dropEvent = new DragEvent('drop', { bubbles: true, dataTransfer });
       el.dispatchEvent(dropEvent);
-      const { detail } = await waitForAttached;
 
+      const { detail } = await waitForAttached;
       expect(detail.files.length).to.equal(1);
     });
 
-    it('should not attach multiple files to non-multiple', async () => {
-      const el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
+    it('throws error when attaching multiple files to non-multiple', async () => {
+      dataTransfer.items.add(file1);
+      dataTransfer.items.add(file2);
 
-      const dataTransfer = new DataTransfer();
-      const files = [
-        new File(['watermelon'], 'watermelon.txt', {
-          type: 'text/plain',
-        }),
-        new File(['watermelon2'], 'watermelon2.txt', {
-          type: 'text/plain',
-        }),
-      ];
-      files.forEach(file => dataTransfer.items.add(file));
-
-      expect(el.attach.bind(el, dataTransfer)).to.throw(
+      const attachFn = el.attach.bind(el, dataTransfer);
+      expect(attachFn).to.throw(
         'Cannot attach multiple files to non-multiple input.'
       );
     });
