@@ -42,8 +42,20 @@ export class FileUpload extends LitElement {
   }
 
   attach(dataTransfer: DataTransfer) {
-    this.input.files = dataTransfer.files;
-    this.dispatchEvent(new CustomEvent('ff-attached', { bubbles: true }));
+    const { files } = dataTransfer;
+    let attachedFiles: FileList | null = null;
+
+    if (files.length === 1 || this.input.multiple) {
+      attachedFiles = files;
+      this.input.files = attachedFiles;
+    }
+
+    this.dispatchEvent(
+      new CustomEvent('ff-attached', {
+        bubbles: true,
+        detail: { files: attachedFiles },
+      })
+    );
   }
 
   get input() {

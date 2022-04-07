@@ -46,8 +46,8 @@ describe('FileUpload', () => {
     });
   });
 
-  describe('attaching files', () => {
-    it('via .attach', async () => {
+  describe('files', () => {
+    it('attaches via .attach', async () => {
       const el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
 
       const dataTransfer = new DataTransfer();
@@ -56,14 +56,17 @@ describe('FileUpload', () => {
       });
       dataTransfer.items.add(file);
 
+      const waitForAttached = oneEvent(
+        el,
+        'ff-attached'
+      ) as Promise<CustomEvent>;
       el.attach(dataTransfer);
-      if (!el.input.files) throw new Error('No files');
+      const { detail } = await waitForAttached;
 
-      const attachedFileName = el.input.files[0].name;
-      expect(attachedFileName).to.equal('watermelon.txt');
+      expect(detail.files.length).to.equal(1);
     });
 
-    it('via drop event', async () => {
+    it('attaches via drop event', async () => {
       const el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
 
       const dataTransfer = new DataTransfer();
@@ -72,15 +75,39 @@ describe('FileUpload', () => {
       });
       dataTransfer.items.add(file);
 
-      const waitForAttached = oneEvent(el, 'ff-attached');
+      const waitForAttached = oneEvent(
+        el,
+        'ff-attached'
+      ) as Promise<CustomEvent>;
       const dropEvent = new DragEvent('drop', { bubbles: true, dataTransfer });
       el.dispatchEvent(dropEvent);
-      await waitForAttached;
+      const { detail } = await waitForAttached;
 
-      if (!el.input.files) throw new Error('No files');
+      expect(detail.files.length).to.equal(1);
+    });
 
-      const attachedFileName = el.input.files[0].name;
-      expect(attachedFileName).to.equal('watermelon.txt');
+    it('should not attach multiple files to non-multiple', async () => {
+      const el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
+
+      const dataTransfer = new DataTransfer();
+      const files = [
+        new File(['watermelon'], 'watermelon.txt', {
+          type: 'text/plain',
+        }),
+        new File(['watermelon2'], 'watermelon2.txt', {
+          type: 'text/plain',
+        }),
+      ];
+      files.forEach(file => dataTransfer.items.add(file));
+
+      const waitForAttached = oneEvent(
+        el,
+        'ff-attached'
+      ) as Promise<CustomEvent>;
+      el.attach(dataTransfer);
+      const { detail } = await waitForAttached;
+
+      expect(detail.files).to.be.null;
     });
   });
 });
