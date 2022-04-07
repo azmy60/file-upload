@@ -100,14 +100,9 @@ describe('FileUpload', () => {
       ];
       files.forEach(file => dataTransfer.items.add(file));
 
-      const waitForAttached = oneEvent(
-        el,
-        'ff-attached'
-      ) as Promise<CustomEvent>;
-      el.attach(dataTransfer);
-      const { detail } = await waitForAttached;
-
-      expect(detail.files).to.be.null;
+      expect(el.attach.bind(el, dataTransfer)).to.throw(
+        'Cannot attach multiple files to non-multiple input.'
+      );
     });
   });
 });

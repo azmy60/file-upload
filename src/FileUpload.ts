@@ -1,15 +1,9 @@
-import { html, LitElement } from 'lit';
+import { html, LitElement, TemplateResult } from 'lit';
 import { property, queryAssignedElements } from 'lit/decorators.js';
 import { hasFile } from './utils.js';
 
 export class FileUpload extends LitElement {
-  @property({ type: Boolean }) multiple = false;
-
-  @queryAssignedElements({ flatten: true }) inputs!: Array<HTMLInputElement>;
-
-  render() {
-    return html`<slot><input type="file" class="__fu-fallback" /></slot>`;
-  }
+  private pendingFiles: FileList = new DataTransfer().files;
 
   public connectedCallback(): void {
     super.connectedCallback();
@@ -23,42 +17,56 @@ export class FileUpload extends LitElement {
     this.removeEventListener('drop', this.onDrop);
   }
 
-  firstUpdated() {
-    if (this.input.classList.contains('__fu-fallback')) {
-      this.input.multiple = this.multiple;
-    } else {
-      this.input.multiple = this.input.multiple || this.multiple;
-    }
-  }
-
   public onDrop(event: DragEvent): void {
-    const transfer = event.dataTransfer;
-    if (!transfer || !hasFile(transfer)) return;
+    const { dataTransfer } = event;
+    if (!dataTransfer || !hasFile(dataTransfer)) return;
 
-    this.attach(transfer);
+    this.attach(dataTransfer);
 
     event.preventDefault();
     event.stopPropagation();
   }
 
-  attach(dataTransfer: DataTransfer) {
-    const { files } = dataTransfer;
-    let attachedFiles: FileList | null = null;
+  public attach(dataTransfer: DataTransfer): void {
+    this.pendingFiles = dataTransfer.files;
+    this.validate();
+    this.attachFilesToInput();
+    this.dispatchAttached();
+  }
 
-    if (files.length === 1 || this.input.multiple) {
-      attachedFiles = files;
-      this.input.files = attachedFiles;
+  private validate(): void {
+    if (!this.input.multiple && this.pendingFiles.length > 1) {
+      throw new Error('Cannot attach multiple files to non-multiple input.');
     }
+  }
 
+  private attachFilesToInput(): void {
+    this.input.files = this.pendingFiles;
+  }
+
+  private dispatchAttached(): void {
     this.dispatchEvent(
       new CustomEvent('ff-attached', {
         bubbles: true,
-        detail: { files: attachedFiles },
+        detail: { files: this.pendingFiles },
       })
     );
   }
 
-  get input() {
+  public get input(): HTMLInputElement {
     return this.inputs[0];
+  }
+
+  @queryAssignedElements({ flatten: true })
+  private inputs!: Array<HTMLInputElement>;
+
+  @property({ type: Boolean }) multiple = false;
+
+  protected render(): TemplateResult {
+    return html`<slot><input type="file" /></slot>`;
+  }
+
+  protected firstUpdated(): void {
+    if (this.multiple) this.input.multiple = true;
   }
 }
