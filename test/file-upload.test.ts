@@ -1,5 +1,5 @@
 import { html } from 'lit';
-import { fixture, expect } from '@open-wc/testing';
+import { fixture, expect, oneEvent } from '@open-wc/testing';
 import { FileUpload } from '../src/FileUpload.js';
 import '../src/file-upload.js';
 
@@ -57,6 +57,26 @@ describe('FileUpload', () => {
       dataTransfer.items.add(file);
 
       el.attach(dataTransfer);
+      if (!el.input.files) throw new Error('No files');
+
+      const attachedFileName = el.input.files[0].name;
+      expect(attachedFileName).to.equal('watermelon.txt');
+    });
+
+    it('via drop event', async () => {
+      const el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
+
+      const dataTransfer = new DataTransfer();
+      const file = new File(['watermelon'], 'watermelon.txt', {
+        type: 'text/plain',
+      });
+      dataTransfer.items.add(file);
+
+      const waitForAttached = oneEvent(el, 'ff-attached');
+      const dropEvent = new DragEvent('drop', { bubbles: true, dataTransfer });
+      el.dispatchEvent(dropEvent);
+      await waitForAttached;
+
       if (!el.input.files) throw new Error('No files');
 
       const attachedFileName = el.input.files[0].name;
