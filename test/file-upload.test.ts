@@ -45,4 +45,22 @@ describe('FileUpload', () => {
       });
     });
   });
+
+  describe('attaching files', () => {
+    it('via .attach', async () => {
+      const el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
+
+      const dataTransfer = new DataTransfer();
+      const file = new File(['watermelon'], 'watermelon.txt', {
+        type: 'text/plain',
+      });
+      dataTransfer.items.add(file);
+
+      el.attach(dataTransfer);
+      if (!el.input.files) throw new Error('No files');
+
+      const attachedFileName = el.input.files[0].name;
+      expect(attachedFileName).to.equal('watermelon.txt');
+    });
+  });
 });

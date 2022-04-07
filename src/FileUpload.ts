@@ -18,6 +18,10 @@ export class FileUpload extends LitElement {
     }
   }
 
+  attach(dataTransfer: DataTransfer) {
+    this.input.files = dataTransfer.files;
+  }
+
   get input() {
     return this.inputs[0];
   }
