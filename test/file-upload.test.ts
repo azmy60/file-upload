@@ -65,7 +65,7 @@ describe('FileUpload', () => {
 
     it('attaches via .attach', async () => {
       dataTransfer.items.add(file1);
-      el.attach(dataTransfer);
+      await el.attach(dataTransfer);
 
       assert.equal(el.input.files?.length, 1);
     });
@@ -84,11 +84,14 @@ describe('FileUpload', () => {
       dataTransfer.items.add(file1);
       dataTransfer.items.add(file2);
 
-      const attachFn = el.attach.bind(el, dataTransfer);
-      assert.throw(
-        attachFn,
-        'Cannot attach multiple files to non-multiple input.'
-      );
+      return el
+        .attach(dataTransfer)
+        .catch(err =>
+          assert.equal(
+            err.message,
+            'Cannot attach multiple files to non-multiple input.'
+          )
+        );
     });
   });
 });

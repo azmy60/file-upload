@@ -21,23 +21,34 @@ export class FileUpload extends LitElement {
     const { dataTransfer } = event;
     if (!dataTransfer || !hasFile(dataTransfer)) return;
 
-    this.attach(dataTransfer);
+    this.attach(dataTransfer).catch(() => {});
 
     event.preventDefault();
     event.stopPropagation();
   }
 
-  public attach(dataTransfer: DataTransfer): void {
+  public async attach(dataTransfer: DataTransfer): Promise<void> {
     this.pendingFiles = dataTransfer.files;
-    this.validate();
-    this.attachFilesToInput();
-    this.dispatchAttached();
+
+    return new Promise<void>((resolve, reject) =>
+      this.validate()
+        .then(() => {
+          this.attachFilesToInput();
+          resolve();
+        })
+        .catch(reject)
+        .finally(() => this.dispatchAttached())
+    );
   }
 
-  private validate(): void {
-    if (!this.input.multiple && this.pendingFiles.length > 1) {
-      throw new Error('Cannot attach multiple files to non-multiple input.');
-    }
+  private async validate(): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      if (!this.input.multiple && this.pendingFiles.length > 1) {
+        reject(
+          new Error('Cannot attach multiple files to non-multiple input.')
+        );
+      } else resolve();
+    });
   }
 
   private attachFilesToInput(): void {
