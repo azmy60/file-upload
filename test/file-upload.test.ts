@@ -93,5 +93,16 @@ describe('FileUpload', () => {
           )
         );
     });
+
+    it('ignores multiple files when dropping multiple files to non-multiple', async () => {
+      dataTransfer.items.add(file1);
+      dataTransfer.items.add(file2);
+
+      const dropEvent = new DragEvent('drop', { bubbles: true, dataTransfer });
+      el.dispatchEvent(dropEvent);
+
+      const { detail } = await waitForAttached;
+      assert.equal(detail.files.length, 0);
+    });
   });
 });
