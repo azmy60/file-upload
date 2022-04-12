@@ -1,7 +1,12 @@
 import { html } from 'lit';
-import { fixture, assert, oneEvent } from '@open-wc/testing';
+import { fixture, assert } from '@open-wc/testing';
 import { FileUpload } from '../src/FileUpload.js';
 import '../src/file-upload.js';
+import {
+  dataTransferFromFile,
+  dataTransferFromFiles,
+  dispatchDropTo,
+} from './test-utils.js';
 
 describe('FileUpload', () => {
   describe('<input> element insertion', () => {
@@ -46,63 +51,48 @@ describe('FileUpload', () => {
     });
   });
 
-  describe('files', () => {
-    let el: FileUpload;
-    let dataTransfer: DataTransfer;
-    let waitForAttached: Promise<CustomEvent>;
-    const file1 = new File(['watermelon'], 'watermelon.txt', {
-      type: 'text/plain',
-    });
-    const file2 = new File(['watermelon2'], 'watermelon2.txt', {
-      type: 'text/plain',
-    });
+  let el: FileUpload;
 
+  const testFiles = [
+    new File(['watermelon'], 'watermelon.txt', {
+      type: 'text/plain',
+    }),
+    new File(['watermelon2'], 'watermelon2.txt', {
+      type: 'text/plain',
+    }),
+  ];
+
+  describe('`non-multiple` input', () => {
     beforeEach(async () => {
       el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
-      dataTransfer = new DataTransfer();
-      waitForAttached = oneEvent(el, 'ff-attached');
     });
 
-    it('attaches via .attach', async () => {
-      dataTransfer.items.add(file1);
-      await el.attach(dataTransfer);
+    it('attaches via .attach', () => {
+      el.attach(dataTransferFromFile(testFiles[0]));
 
       assert.equal(el.input.files?.length, 1);
     });
 
     it('attaches via drop event', async () => {
-      dataTransfer.items.add(file1);
+      const { files } = await dispatchDropTo(
+        el,
+        dataTransferFromFile(testFiles[0])
+      );
 
-      const dropEvent = new DragEvent('drop', { bubbles: true, dataTransfer });
-      el.dispatchEvent(dropEvent);
-
-      const { detail } = await waitForAttached;
-      assert.equal(detail.files.length, 1);
+      assert.equal(files?.length, 1);
     });
 
-    it('throws error when attaching multiple files to non-multiple', async () => {
-      dataTransfer.items.add(file1);
-      dataTransfer.items.add(file2);
+    it('ignores dropping multiple files via drop event', async () => {
+      const { files } = await dispatchDropTo(
+        el,
+        dataTransferFromFiles(testFiles)
+      );
 
-      return el
-        .attach(dataTransfer)
-        .catch(err =>
-          assert.equal(
-            err.message,
-            'Cannot attach multiple files to non-multiple input.'
-          )
-        );
+      assert.equal(files?.length, 0);
     });
 
-    it('ignores multiple files when dropping multiple files to non-multiple', async () => {
-      dataTransfer.items.add(file1);
-      dataTransfer.items.add(file2);
-
-      const dropEvent = new DragEvent('drop', { bubbles: true, dataTransfer });
-      el.dispatchEvent(dropEvent);
-
-      const { detail } = await waitForAttached;
-      assert.equal(detail.files.length, 0);
+    it('throws error when attaching multiple files via .attach', () => {
+      assert.throw(() => el.attach(dataTransferFromFiles(testFiles)));
     });
   });
 });

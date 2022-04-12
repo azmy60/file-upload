@@ -1,10 +1,12 @@
 import { html, LitElement, TemplateResult } from 'lit';
 import { property, queryAssignedElements } from 'lit/decorators.js';
-import { hasFile } from './utils.js';
+import { hasFile, emptyFileList } from './utils.js';
+
+export interface FileUploadDetail {
+  files: FileList;
+}
 
 export class FileUpload extends LitElement {
-  private pendingFiles: FileList = new DataTransfer().files;
-
   public connectedCallback(): void {
     super.connectedCallback();
 
@@ -21,47 +23,34 @@ export class FileUpload extends LitElement {
     const { dataTransfer } = event;
     if (!dataTransfer || !hasFile(dataTransfer)) return;
 
-    this.attach(dataTransfer).catch(() => {});
-
     event.preventDefault();
     event.stopPropagation();
+
+    try {
+      this.attach(dataTransfer);
+    } catch (e) {
+      //
+    }
   }
 
-  public async attach(dataTransfer: DataTransfer): Promise<void> {
-    this.pendingFiles = dataTransfer.files;
+  public attach(dataTransfer: DataTransfer): void {
+    if (!this.input.multiple && dataTransfer.files.length > 1) {
+      this.dispatchAttached({ files: emptyFileList() });
+      throw new Error('Cannot attach multiple files to non-multiple input.');
+    }
 
-    return new Promise<void>((resolve, reject) =>
-      this.validate()
-        .then(() => {
-          this.attachFilesToInput();
-          resolve();
-        })
-        .catch(reject)
-        .finally(() => this.dispatchAttached())
-    );
+    this.input.files = dataTransfer.files;
+
+    this.dispatchAttached({ files: this.input.files });
   }
 
-  private async validate(): Promise<void> {
-    return new Promise<void>((resolve, reject) => {
-      if (!this.input.multiple && this.pendingFiles.length > 1) {
-        reject(
-          new Error('Cannot attach multiple files to non-multiple input.')
-        );
-      } else resolve();
+  // TODO use strongly typed custom event
+  private dispatchAttached(detail: FileUploadDetail): void {
+    const event = new CustomEvent<FileUploadDetail>('ff-attached', {
+      bubbles: true,
+      detail,
     });
-  }
-
-  private attachFilesToInput(): void {
-    this.input.files = this.pendingFiles;
-  }
-
-  private dispatchAttached(): void {
-    this.dispatchEvent(
-      new CustomEvent('ff-attached', {
-        bubbles: true,
-        detail: { files: this.input.files },
-      })
-    );
+    this.dispatchEvent(event);
   }
 
   public get input(): HTMLInputElement {
@@ -71,7 +60,8 @@ export class FileUpload extends LitElement {
   @queryAssignedElements({ flatten: true })
   private inputs!: Array<HTMLInputElement>;
 
-  @property({ type: Boolean }) multiple = false;
+  @property({ type: Boolean })
+  public multiple = false;
 
   protected render(): TemplateResult {
     return html`<slot><input type="file" /></slot>`;
