@@ -1,5 +1,5 @@
 import { html } from 'lit';
-import { fixture, expect, oneEvent } from '@open-wc/testing';
+import { fixture, assert, oneEvent } from '@open-wc/testing';
 import { FileUpload } from '../src/FileUpload.js';
 import '../src/file-upload.js';
 
@@ -8,7 +8,7 @@ describe('FileUpload', () => {
     it('inserts <input> by default', async () => {
       const el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
 
-      expect(el.input).to.be.ok;
+      assert.isOk(el.input);
     });
 
     it("does not insert <input> if it's already specified", async () => {
@@ -16,7 +16,7 @@ describe('FileUpload', () => {
         html`<file-upload><input type="file" id="test-id" /></file-upload>`
       );
 
-      expect(el.input.id).to.equal('test-id');
+      assert.equal(el.input.id, 'test-id');
     });
   });
 
@@ -25,7 +25,7 @@ describe('FileUpload', () => {
       it('accepts one file by default', async () => {
         const el = await fixture<FileUpload>(html`<file-upload></file-upload>`);
 
-        expect(el.input.multiple).to.be.false;
+        assert.isFalse(el.input.multiple);
       });
 
       it('accepts multiple files by setting `multiple` attribute in <file-upload> tag', async () => {
@@ -33,7 +33,7 @@ describe('FileUpload', () => {
           html`<file-upload multiple><input type="file" /></file-upload>`
         );
 
-        expect(el.input.multiple).to.be.true;
+        assert.isTrue(el.input.multiple);
       });
 
       it('accepts multiple files by setting `multiple` attribute in <input> tag', async () => {
@@ -41,7 +41,7 @@ describe('FileUpload', () => {
           html`<file-upload><input type="file" multiple /></file-upload>`
         );
 
-        expect(el.input.multiple).to.be.true;
+        assert.isTrue(el.input.multiple);
       });
     });
   });
@@ -67,7 +67,7 @@ describe('FileUpload', () => {
       dataTransfer.items.add(file1);
       el.attach(dataTransfer);
 
-      expect(el.input.files?.length).to.equal(1);
+      assert.equal(el.input.files?.length, 1);
     });
 
     it('attaches via drop event', async () => {
@@ -77,7 +77,7 @@ describe('FileUpload', () => {
       el.dispatchEvent(dropEvent);
 
       const { detail } = await waitForAttached;
-      expect(detail.files.length).to.equal(1);
+      assert.equal(detail.files.length, 1);
     });
 
     it('throws error when attaching multiple files to non-multiple', async () => {
@@ -85,7 +85,8 @@ describe('FileUpload', () => {
       dataTransfer.items.add(file2);
 
       const attachFn = el.attach.bind(el, dataTransfer);
-      expect(attachFn).to.throw(
+      assert.throw(
+        attachFn,
         'Cannot attach multiple files to non-multiple input.'
       );
     });
