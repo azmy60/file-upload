@@ -59,7 +59,7 @@ export class FileUpload extends LitElement {
     this.dispatchEvent(
       new CustomEvent('ff-attached', {
         bubbles: true,
-        detail: { files: this.pendingFiles },
+        detail: { files: this.input.files },
       })
     );
   }
