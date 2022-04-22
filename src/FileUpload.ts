@@ -1,6 +1,7 @@
 import { html, LitElement, TemplateResult } from 'lit';
 import { property, queryAssignedElements } from 'lit/decorators.js';
 import { hasFile, emptyFileList } from './utils.js';
+import { FileContainer } from './FileContainer.js';
 
 export interface FileUploadDetail {
   files: FileList;
@@ -39,9 +40,11 @@ export class FileUpload extends LitElement {
       throw new Error('Cannot attach multiple files to non-multiple input.');
     }
 
-    this.input.files = dataTransfer.files;
+    const fileContainer = new FileContainer(this.files);
+    fileContainer.appendDataTransfer(dataTransfer);
+    this.setInputFiles(fileContainer);
 
-    this.dispatchAttached({ files: this.input.files });
+    this.dispatchAttached({ files: this.files });
   }
 
   // TODO use strongly typed custom event
@@ -51,6 +54,14 @@ export class FileUpload extends LitElement {
       detail,
     });
     this.dispatchEvent(event);
+  }
+
+  private setInputFiles(dataTransfer: DataTransfer): void {
+    this.input.files = dataTransfer.files;
+  }
+
+  public get files(): FileList {
+    return this.input.files ?? emptyFileList();
   }
 
   public get input(): HTMLInputElement {
