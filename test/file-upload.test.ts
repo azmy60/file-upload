@@ -68,31 +68,17 @@ describe('FileUpload', () => {
     });
 
     it('attaches via .attach', () => {
-      el.attach(dataTransferFromFile(testFiles[0]));
-
-      assert.equal(el.input.files?.length, 1);
+      el.attach(testFiles[0]);
+      assert.equal(el.files.length, 1);
     });
 
     it('attaches via drop event', async () => {
-      const { files } = await dispatchDropTo(
-        el,
-        dataTransferFromFile(testFiles[0])
-      );
-
-      assert.equal(files?.length, 1);
-    });
-
-    it('ignores dropping multiple files via drop event', async () => {
-      const { files } = await dispatchDropTo(
-        el,
-        dataTransferFromFiles(testFiles)
-      );
-
-      assert.equal(files?.length, 0);
+      await dispatchDropTo(el, dataTransferFromFile(testFiles[0]));
+      assert.equal(el.files.length, 1);
     });
 
     it('throws error when attaching multiple files via .attach', () => {
-      assert.throw(() => el.attach(dataTransferFromFiles(testFiles)));
+      assert.throws(() => el.attach(testFiles));
     });
   });
 
@@ -104,9 +90,9 @@ describe('FileUpload', () => {
     });
 
     it('can attach multiple files', async () => {
-      const dataTransfer = dataTransferFromFiles(testFiles);
-      const { files } = await dispatchDropTo(el, dataTransfer);
-      assert.deepEqual(files, dataTransfer.files);
+      const dt = dataTransferFromFiles(testFiles);
+      await dispatchDropTo(el, dt);
+      assert.deepEqual(el.files, dt.files);
     });
 
     it('should stack the files when attaching multiple times', async () => {
@@ -115,8 +101,8 @@ describe('FileUpload', () => {
       const dtFile1 = dataTransferFromFile(testFiles[1]);
 
       await dispatchDropTo(el, dtFile0);
-      const { files } = await dispatchDropTo(el, dtFile1);
-      assert.deepEqual(files, dtFile0File1.files);
+      await dispatchDropTo(el, dtFile1);
+      assert.deepEqual(el.files, dtFile0File1.files);
     });
   });
 });

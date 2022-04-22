@@ -1,11 +1,8 @@
 import { html, LitElement, TemplateResult } from 'lit';
 import { property, queryAssignedElements } from 'lit/decorators.js';
-import { hasFile, emptyFileList } from './utils.js';
+import { hasFile, emptyFileList, filesFromAttachment } from './utils.js';
 import { FileContainer } from './FileContainer.js';
-
-export interface FileUploadDetail {
-  files: FileList;
-}
+import { Attachment } from './types.js';
 
 export class FileUpload extends LitElement {
   public connectedCallback(): void {
@@ -27,33 +24,25 @@ export class FileUpload extends LitElement {
     event.preventDefault();
     event.stopPropagation();
 
-    try {
-      this.attach(dataTransfer);
-    } catch (e) {
-      //
-    }
+    this.attach(dataTransfer);
+    this.dispatchAttached();
   }
 
-  public attach(dataTransfer: DataTransfer): void {
-    if (!this.input.multiple && dataTransfer.files.length > 1) {
-      this.dispatchAttached({ files: emptyFileList() });
+  public attach(attachment: Attachment): void {
+    const files = filesFromAttachment(attachment);
+
+    if (!this.input.multiple && files.length > 1) {
       throw new Error('Cannot attach multiple files to non-multiple input.');
     }
 
     const fileContainer = new FileContainer(this.files);
-    fileContainer.appendDataTransfer(dataTransfer);
+    fileContainer.appendFiles(files);
     this.setInputFiles(fileContainer);
-
-    this.dispatchAttached({ files: this.files });
   }
 
   // TODO use strongly typed custom event
-  private dispatchAttached(detail: FileUploadDetail): void {
-    const event = new CustomEvent<FileUploadDetail>('ff-attached', {
-      bubbles: true,
-      detail,
-    });
-    this.dispatchEvent(event);
+  private dispatchAttached(): void {
+    this.dispatchEvent(new CustomEvent('ff-attached', { bubbles: true }));
   }
 
   private setInputFiles(dataTransfer: DataTransfer): void {

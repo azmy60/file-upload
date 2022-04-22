@@ -6,10 +6,6 @@ export class FileContainer extends DataTransfer {
     if (files) this.appendFiles(files);
   }
 
-  appendDataTransfer(dataTransfer: DataTransfer): void {
-    this.appendFiles(dataTransfer.files);
-  }
-
   appendFiles(files: Files): void {
     Array.prototype.forEach.call(files, file => this.items.add(file));
   }
