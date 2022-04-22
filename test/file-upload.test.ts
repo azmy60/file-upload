@@ -95,4 +95,28 @@ describe('FileUpload', () => {
       assert.throw(() => el.attach(dataTransferFromFiles(testFiles)));
     });
   });
+
+  describe('`multiple` input', () => {
+    beforeEach(async () => {
+      el = await fixture<FileUpload>(
+        html`<file-upload multiple></file-upload>`
+      );
+    });
+
+    it('can attach multiple files', async () => {
+      const dataTransfer = dataTransferFromFiles(testFiles);
+      const { files } = await dispatchDropTo(el, dataTransfer);
+      assert.deepEqual(files, dataTransfer.files);
+    });
+
+    it('should stack the files when attaching multiple times', async () => {
+      const dtFile0File1 = dataTransferFromFiles(testFiles);
+      const dtFile0 = dataTransferFromFile(testFiles[0]);
+      const dtFile1 = dataTransferFromFile(testFiles[1]);
+
+      await dispatchDropTo(el, dtFile0);
+      const { files } = await dispatchDropTo(el, dtFile1);
+      assert.deepEqual(files, dtFile0File1.files);
+    });
+  });
 });
